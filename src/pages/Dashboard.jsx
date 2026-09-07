@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Wallet, TrendingUp, TrendingDown, Clock, AlertTriangle, Plus } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Wallet, TrendingUp, TrendingDown, Clock, AlertTriangle, Plus, ArrowRight } from "lucide-react";
 import Topbar from "../components/Topbar";
 import StatCard from "../components/StatCard";
 import ChartCard from "../components/charts/ChartCard";
@@ -32,6 +33,9 @@ export default function Dashboard() {
   const methodData = useMemo(() => buildMethodBreakdown(transactions), [transactions]);
   const profitData = useMemo(() => buildWeeklyProfit(transactions, 8), [transactions]);
   const recent = transactions.slice(0, 8);
+  const needsAttention = transactions
+    .filter((t) => t.status === "pending" || t.status === "failed")
+    .slice(0, 5);
 
   return (
     <>
@@ -80,6 +84,43 @@ export default function Dashboard() {
           <ChartCard title="Profit by week" subtitle="Last 8 weeks" className="h-64">
             <ProfitChart data={profitData} />
           </ChartCard>
+        </div>
+
+        <div className="bg-panel border border-border">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium">Needs attention</h3>
+              <p className="text-2xs text-dim mt-0.5">Pending and failed transactions to review</p>
+            </div>
+            <Link
+              to="/transactions"
+              className="flex items-center gap-1 text-2xs text-accent hover:text-text transition-colors"
+            >
+              View all <ArrowRight size={12} />
+            </Link>
+          </div>
+          {needsAttention.length > 0 ? (
+            <div className="divide-y divide-border/60">
+              {needsAttention.map((t) => (
+                <Link
+                  key={t.id}
+                  to="/transactions"
+                  className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-panel2/50 transition-colors"
+                >
+                  <div className="min-w-0">
+                    <div className="truncate text-sm">{t.customerName || t.notes || "Unnamed transaction"}</div>
+                    <div className="text-2xs text-dim mt-0.5">{t.game || "No game"} · {formatDate(t.date)}</div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <StatusBadge status={t.status} />
+                    <span className="num text-sm">{formatMoney(t.amount)}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="px-4 py-5 text-sm text-dim">All transactions are in a resolved state.</div>
+          )}
         </div>
 
         <div className="bg-panel border border-border">
